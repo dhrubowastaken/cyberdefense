@@ -214,10 +214,10 @@ def configure_llm(config: dict) -> dict:
         # Dynamically fetch available non-retired models from Google API
         print(f"  {DIM}Querying Google API for active Gemini models...{RESET}")
         try:
-            from cyberdefense.llm.model_finder import fetch_available_gemini_models
+            from cyberdefense.investigation import fetch_available_gemini_models
             available_models = fetch_available_gemini_models(api_key, force_refresh=True)
         except Exception:
-            available_models = ["gemini-3.5-flash-lite", "gemini-3-flash-preview", "gemini-3.8-flash"]
+            available_models = ["gemini-3.5-flash-lite", "gemini-3-flash-preview", "gemini-3.5-flash"]
 
         choices = [f"{m} {DIM}(Active on Google API){RESET}" for m in available_models[:4]]
         choices.append("Custom model name")

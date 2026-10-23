@@ -18,6 +18,7 @@ from datetime import datetime
 from cyberdefense.models import (
     LogEvent,
     EventType,
+    Alert,
     AttackType,
     Severity,
     AlertStatus,
@@ -162,3 +163,107 @@ async def test_simulation_midstream_ip_block():
 
     # Clean up
     firewall.unblock_ip(test_ip)
+
+
+@pytest.mark.asyncio
+async def test_async_gemini_forwarding_and_midstream_blocking_continuation():
+    """Verify that when an alert is blocked, Gemini investigation completes, forwards report, and subsequent logs execute."""
+    from cyberdefense.response import firewall, alert_queue
+    from cyberdefense.event_bus import bus
+    import asyncio
+
+    app_core.reset_state()
+    app_core.initialize()
+
+    investigated_alerts = []
+    async def on_inv(alert_data):
+        investigated_alerts.append(alert_data)
+    bus.subscribe("alert_investigated", on_inv)
+
+    attacker_ip = "192.168.1.188"
+    other_ip = "192.168.1.199"
+
+    # 1. Fire an alert
+    alert = Alert(
+        attack_type=AttackType.PORT_SCAN,
+        mitre_id="T1046",
+        source_ip=attacker_ip,
+        target="10.0.0.5",
+        rule_summary=f"Port scan from {attacker_ip}",
+    )
+    await bus.publish("alert_generated", alert)
+
+    # 2. Block the attacker IP immediately
+    await alert_queue.take_action(
+        alert_id=alert.id,
+        action_type="BLOCK_IP",
+        target=attacker_ip,
+        reason="Manual block mid-simulation",
+    )
+    assert firewall.is_ip_blocked(attacker_ip) is True
+
+    # 3. Simulate subsequent logs: attacker is dropped, but other IP continues execution
+    blocked_evt = LogEvent(source_ip=attacker_ip, dest_ip="10.0.0.5", dest_port=80, event_type=EventType.CONNECTION)
+    allowed_evt = LogEvent(source_ip=other_ip, dest_ip="10.0.0.5", dest_port=80, event_type=EventType.CONNECTION)
+
+    await app_core._on_streamed_log_event(blocked_evt)
+    assert blocked_evt.status == "BLOCKED"
+
+    await app_core._on_streamed_log_event(allowed_evt)
+    assert allowed_evt.status != "BLOCKED"
+
+    # 4. Wait for investigation task to finish without stalling
+    if app_core._background_tasks:
+        await asyncio.gather(*list(app_core._background_tasks), return_exceptions=True)
+
+    assert len(investigated_alerts) >= 1
+    report = alert.investigation_report
+    assert report is not None
+    assert "title" in report
+
+    # Clean up
+    firewall.unblock_ip(attacker_ip)
+    bus.unsubscribe("alert_investigated", on_inv)
+
+
+@pytest.mark.asyncio
+async def test_pre_mitigated_alert_skips_llm_if_ip_already_blocked():
+    """Verify that when an IP is already blocked in firewall perimeter rules,
+    subsequent alerts for that IP completely bypass Gemini and get marked as PRE_MITIGATED."""
+    from unittest.mock import AsyncMock
+    from cyberdefense.response import firewall
+    from cyberdefense.investigation import InvestigationAgent
+    from cyberdefense.models import Alert, AttackType, Severity, AlertStatus
+
+    blocked_ip = "192.168.99.77"
+    rule_id = firewall.block_ip(blocked_ip, reason="Prior attack containment")
+
+    agent = InvestigationAgent()
+    agent.provider.generate_investigation = AsyncMock()
+
+    alert = Alert(
+        attack_type=AttackType.PORT_SCAN,
+        mitre_id="T1046",
+        severity=Severity.HIGH,
+        source_ip=blocked_ip,
+        target="10.0.0.5",
+        rule_summary=f"Port scan reconnaissance from {blocked_ip}",
+    )
+
+    report = await agent.investigate_alert(alert)
+
+    # 1. LLM provider must NOT have been called
+    agent.provider.generate_investigation.assert_not_called()
+
+    # 2. Report and alert state must be pre-mitigated
+    assert report.verdict == "PRE_MITIGATED"
+    assert report.model_used == "firewall-containment-cache"
+    assert rule_id in report.executive_summary
+    assert alert.status == AlertStatus.ACTIONED
+    assert alert.admin_action == "ALREADY_BLOCKED"
+    assert "already blocked" in alert.admin_notes.lower()
+    assert alert.severity == Severity.LOW
+
+    # Clean up
+    firewall.unblock_ip(blocked_ip)
+

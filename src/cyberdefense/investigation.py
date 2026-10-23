@@ -241,22 +241,8 @@ def fetch_available_gemini_models(api_key: str, force_refresh: bool = False) -> 
 
 
 def resolve_active_model(configured_model: str, api_key: str) -> str:
-    """Resolve the best active Gemini model, auto-migrating if the configured model is retired."""
-    name_lower = configured_model.lower()
-    is_deprecated = any(dep in name_lower for dep in ("2.0", "2.5", "1.5", "1.0"))
-
-    if not is_deprecated:
-        return configured_model
-
-    available = fetch_available_gemini_models(api_key)
-    for model in available:
-        if "flash" in model.lower() and "lite" in model.lower():
-            return model
-    for model in available:
-        if "flash" in model.lower():
-            return model
-
-    return available[0] if available else "gemini-3.5-flash-lite"
+    """Use the user-configured model directly."""
+    return configured_model
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -487,36 +473,35 @@ class GeminiProvider(LLMProvider):
         if not self._client:
             return await self._fallback.generate_investigation(prompt, system_prompt)
 
+        import asyncio
         from google.genai import types
 
         for attempt in range(2):
             try:
-                response = self._client.models.generate_content(
-                    model=self.model_name,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction=system_prompt,
-                        temperature=settings.llm.gemini.temperature,
-                        response_mime_type="application/json",
+                # Fully non-blocking async network call with strict 8-second timeout
+                response = await asyncio.wait_for(
+                    self._client.aio.models.generate_content(
+                        model=self.model_name,
+                        contents=prompt,
+                        config=types.GenerateContentConfig(
+                            system_instruction=system_prompt,
+                            temperature=settings.llm.gemini.temperature,
+                            response_mime_type="application/json",
+                        ),
                     ),
+                    timeout=8.0,
                 )
-                return response.text
+                if response and response.text:
+                    return response.text
             except Exception as e:
                 err_str = str(e)
-                if ("404" in err_str or "NOT_FOUND" in err_str) and attempt == 0:
-                    logger.warning(f"Model '{self.model_name}' returned 404/Retired. Fetching latest Gemini models...")
-                    fresh_models = fetch_available_gemini_models(self.api_key, force_refresh=True)
-                    if fresh_models:
-                        for alt in fresh_models:
-                            if alt != self.model_name and ("flash" in alt or "preview" in alt):
-                                logger.info(f"Auto-switching Gemini model to '{alt}'...")
-                                self.model_name = alt
-                                break
+                logger.warning(f"Gemini API attempt {attempt + 1} ({self.model_name}) error: {err_str[:160]}")
+                if attempt == 0:
+                    await asyncio.sleep(0.5)
                     continue
-
-                logger.error(f"Gemini API call failed ({self.model_name}): {e}. Using intelligent fallback.")
                 break
 
+        logger.info(f"Using local SOC analyst fallback after {self.model_name} attempts.")
         return await self._fallback.generate_investigation(prompt, system_prompt)
 
 
@@ -627,6 +612,51 @@ class InvestigationAgent:
 
     async def investigate_alert(self, alert: Alert) -> InvestigationReport:
         """Perform comprehensive LLM investigation on a Tier 1 security alert."""
+        # 0. Fast-path: If source IP is already blocked in active firewall perimeter rules, skip LLM call!
+        from cyberdefense.response import firewall
+        if alert.source_ip and firewall.is_ip_blocked(alert.source_ip):
+            rule_entry = firewall._blocked_ips.get(alert.source_ip, {})
+            rule_id = rule_entry.get("rule_id", "ACTIVE-RULE")
+            logger.info(f"Alert {alert.id} from {alert.source_ip} is ALREADY BLOCKED by {rule_id}. Skipping LLM request.")
+
+            report = InvestigationReport(
+                alert_id=alert.id,
+                title=f"Pre-Mitigated Incident: Source IP {alert.source_ip} Already Blocked",
+                executive_summary=(
+                    f"Attack telemetry [{alert.attack_type.value}] recognized from {alert.source_ip}. "
+                    f"However, this IP is ALREADY ACTIVELY BLOCKED in firewall perimeter rules (Rule: {rule_id}). "
+                    f"All incoming packets from this source are automatically intercepted and dropped at ingress. "
+                    f"No further containment action required."
+                ),
+                severity=Severity.LOW,
+                severity_justification=f"Neutralized: Existing firewall rule ({rule_id}) is actively dropping traffic from {alert.source_ip}.",
+                mitre_mapping=f"{alert.mitre_id} (Neutralized by Active Rule {rule_id})",
+                attack_narrative=f"Telemetry matched attack threshold, but source IP {alert.source_ip} was already blocked in a previous case. Containment remains active.",
+                correlated_alert_ids=self.correlator.register_alert(alert),
+                verdict="PRE_MITIGATED",
+                is_false_positive=False,
+                recommended_actions=[
+                    RecommendedAction(
+                        action=ActionType.BLOCK_IP,
+                        priority=1,
+                        reason=f"IP {alert.source_ip} is already blocked in firewall ({rule_id}). Maintain active perimeter block.",
+                        suggested_target=alert.source_ip,
+                    )
+                ],
+                model_used="firewall-containment-cache",
+            )
+
+            alert.investigation_report = report.model_dump()
+            alert.severity = Severity.LOW
+            alert.status = AlertStatus.ACTIONED
+            alert.admin_action = "ALREADY_BLOCKED"
+            alert.admin_notes = f"Pre-mitigated: Source IP {alert.source_ip} is already blocked by active rule {rule_id}."
+            alert.actioned_at = datetime.utcnow()
+
+            self._investigations.append(report)
+            await bus.publish("alert_investigated", alert)
+            return report
+
         logger.info(f"Starting Tier 2 LLM investigation for Alert {alert.id} ({alert.attack_type.value})")
         alert.status = AlertStatus.INVESTIGATING
 

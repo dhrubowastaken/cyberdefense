@@ -28,6 +28,7 @@ class CyberDefenseApp:
         self.investigation_agent = InvestigationAgent()
         self.log_monitor = LogMonitor()
         self._is_initialized = False
+        self._background_tasks: set[asyncio.Task] = set()
 
     def initialize(self) -> None:
         """Wire up event subscriptions across subsystems."""
@@ -46,20 +47,33 @@ class CyberDefenseApp:
     async def _on_streamed_log_event(self, event: LogEvent) -> None:
         """Handle individual log events streamed by LogMonitor."""
         # Active Perimeter Containment:
-        # If the source IP or target is blocked or isolated, intercept and drop the packet!
+        # Intercept and drop packet if offending external source_ip is blocked,
+        # or if external egress dest_ip is blocked, or if an endpoint is quarantined/isolated.
+        # Protect internal target server (10.0.0.5) from accidental perimeter blocking.
         is_blocked = (
             firewall.is_ip_blocked(event.source_ip)
-            or firewall.is_ip_blocked(event.dest_ip)
+            or (event.dest_ip != "10.0.0.5" and firewall.is_ip_blocked(event.dest_ip))
             or firewall.is_host_isolated(event.source_ip)
             or firewall.is_host_isolated(event.dest_ip)
         )
 
         if is_blocked:
+            original_status = event.status
+            original_details = event.details
+            drop_details = f"[FIREWALL PERIMETER DROP] Traffic blocked by active rule for {event.source_ip}"
             event.status = "BLOCKED"
-            event.details = f"[FIREWALL PERIMETER DROP] Traffic blocked by active rule for {event.source_ip}"
+            event.details = drop_details
             logger.info(f"Firewall intercepted and dropped packet from blocked IP {event.source_ip} -> {event.dest_ip}")
             # Broadcast blocked event to UI so analyst sees active firewall dropping packets in real time
             await bus.publish("log_event", event.model_dump())
+
+            # Evaluate threat pattern in Tier 1 detection so repeated attack attempts
+            # from blocked IPs are recognized and flagged as pre-mitigated incidents
+            event.status = original_status
+            event.details = original_details
+            await self.trigger_agent.handle_log_event(event)
+            event.status = "BLOCKED"
+            event.details = drop_details
             return
 
         # 1. Broadcast raw event to UI via EventBus
@@ -74,13 +88,16 @@ class CyberDefenseApp:
         alert_queue.add_alert(alert)
 
         # 2. Trigger Tier 2 LLM Investigation asynchronously
-        asyncio.create_task(self._run_investigation(alert))
+        task = asyncio.create_task(self._run_investigation(alert))
+        self._background_tasks.add(task)
+        task.add_done_callback(self._background_tasks.discard)
 
     async def _run_investigation(self, alert: Alert) -> None:
         """Invoke Tier 2 LLM investigation and update queue."""
         try:
             await self.investigation_agent.investigate_alert(alert)
             alert_queue.add_alert(alert)
+            logger.info(f"Tier 2 investigation report attached and queue updated for Alert {alert.id}")
         except Exception as e:
             logger.error(f"Tier 2 investigation failed for alert {alert.id}: {e}", exc_info=True)
 
@@ -92,6 +109,8 @@ class CyberDefenseApp:
     ) -> int:
         """Start a simulation by reading an uploaded or preset log file."""
         self.initialize()
+        # Reset Tier 1 detection sliding windows for fresh replay analysis without resetting firewall containment rules
+        self.trigger_agent.reset()
         path = Path(file_path)
         if not path.exists():
             raise FileNotFoundError(f"Simulation file does not exist: {path}")
@@ -99,13 +118,15 @@ class CyberDefenseApp:
         events = LogParser.parse_file(path)
         logger.info(f"Loaded {len(events)} events from {path.name}. Starting simulation replay...")
 
-        asyncio.create_task(
+        task = asyncio.create_task(
             self.log_monitor.start_replay(
                 events=events,
                 speed_multiplier=speed_multiplier,
                 instant=instant,
             )
         )
+        self._background_tasks.add(task)
+        task.add_done_callback(self._background_tasks.discard)
         return len(events)
 
     def reset_state(self) -> None:

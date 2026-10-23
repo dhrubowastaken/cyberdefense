@@ -312,7 +312,10 @@ class LogMonitor:
                 self.current_index = idx + 1
 
                 if self._event_callback:
-                    await self._event_callback(event)
+                    try:
+                        await self._event_callback(event)
+                    except Exception as err:
+                        logger.error(f"Error executing event stream callback on event {idx}: {err}", exc_info=True)
 
                 if not instant and speed_multiplier > 0:
                     delay = max(0.01, 0.1 / speed_multiplier)

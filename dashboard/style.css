@@ -634,6 +634,38 @@ body {
   line-height: 1.45;
 }
 
+.already-blocked-banner {
+  background: rgba(0, 243, 255, 0.08);
+  border: 1px solid rgba(0, 243, 255, 0.28);
+  border-radius: var(--radius-sm);
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.already-blocked-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: var(--accent-cyan);
+  letter-spacing: 0.04em;
+}
+.already-blocked-desc {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  line-height: 1.45;
+}
+.already-blocked-desc code {
+  color: var(--accent-cyan);
+  background: rgba(0, 243, 255, 0.1);
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+}
+
 /* ── Right Column: Containment & Terminal ─────────────────────── */
 .side-column {
   display: flex;

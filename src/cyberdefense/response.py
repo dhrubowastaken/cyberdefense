@@ -312,7 +312,21 @@ class AlertQueue:
         else:
             act_type = action_type
 
-        tgt = target or alert.source_ip or alert.target or "unknown"
+        import re
+        if act_type == ActionType.BLOCK_IP:
+            candidate = target or alert.source_ip
+            ip_m = re.search(r"\b(?:\d{1,3}\.){3}\d{1,3}\b", candidate)
+            tgt = ip_m.group(0) if ip_m else (alert.source_ip or "unknown")
+            # Safety: Do not block the protected internal server itself
+            if tgt == "10.0.0.5" and alert.source_ip and alert.source_ip != "10.0.0.5":
+                tgt = alert.source_ip
+        elif act_type == ActionType.ISOLATE_HOST:
+            candidate = target or alert.source_ip
+            ip_m = re.search(r"\b(?:\d{1,3}\.){3}\d{1,3}\b", candidate)
+            tgt = ip_m.group(0) if ip_m else candidate
+        else:
+            tgt = target or alert.source_ip or alert.target or "unknown"
+
         action = AdminAction(
             alert_id=alert_id,
             action_type=act_type,

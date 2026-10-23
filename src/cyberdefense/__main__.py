@@ -7,7 +7,7 @@ Executed when running `python -m cyberdefense` or `uv run python -m cyberdefense
 import sys
 import asyncio
 import uvicorn
-from cyberdefense.config import settings
+from cyberdefense.config import settings, setup_logging
 
 if sys.platform == "win32":
     try:
@@ -16,6 +16,7 @@ if sys.platform == "win32":
         pass
 
 def main():
+    setup_logging(settings)
     if hasattr(sys.stdout, "reconfigure"):
         try:
             sys.stdout.reconfigure(encoding="utf-8", errors="replace")

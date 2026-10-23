@@ -299,6 +299,8 @@ async def get_simulation_progress() -> dict[str, Any]:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    from cyberdefense.config import setup_logging
+    setup_logging(settings)
     logger.info("Starting CyberDefense SOC Server...")
     app_core.initialize()
     yield

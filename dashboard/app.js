@@ -225,6 +225,15 @@ function renderAlerts() {
   filtered.forEach((alert) => {
     const inv = alert.investigation_report;
     const isFp = Boolean(inv?.is_false_positive || inv?.verdict === "FALSE_POSITIVE");
+    const activeBlockRule = state.firewallRules.find(
+      (r) => r.type === "BLOCK_IP" && r.target === alert.source_ip && r.status !== "REMOVED"
+    );
+    const isPreMitigated = Boolean(
+      alert.admin_action === "ALREADY_BLOCKED" ||
+      inv?.verdict === "PRE_MITIGATED" ||
+      (activeBlockRule && alert.admin_action !== "BLOCK_IP" && alert.admin_action !== "ISOLATE_HOST")
+    );
+    const isAlreadyBlocked = isPreMitigated;
     const isActioned = alert.status === "ACTIONED" || alert.status === "RESOLVED" || alert.status === "DISMISSED";
 
     const card = document.createElement("div");
@@ -235,6 +244,7 @@ function renderAlerts() {
         <div class="badge-row">
           <span class="sev-badge sev-${alert.severity}">${alert.severity}</span>
           ${isFp ? `<span class="badge-fp">🛡️ FALSE POSITIVE · AUTO-DISMISSED</span>` : ""}
+          ${isAlreadyBlocked ? `<span class="badge-fp" style="background:rgba(0,243,255,0.12);color:var(--accent-cyan);border-color:rgba(0,243,255,0.35);">🔒 PRE-MITIGATED · ALREADY BLOCKED</span>` : ""}
           <span class="mitre-badge">${alert.attack_type} · ${alert.mitre_id}</span>
           ${inv?.correlated_alert_ids?.length ? `<span class="count-badge">🔗 ${inv.correlated_alert_ids.length} Correlated</span>` : ""}
         </div>
@@ -284,6 +294,19 @@ function renderAlerts() {
               </div>
               <div class="fp-banner-desc">
                 Tier 1 flagged this activity via naive threshold. Tier 2 analyzed entity context, source origin (${alert.source_ip}), and legitimate operational behavior, automatically dismissing the alert to prevent analyst fatigue.
+              </div>
+            </div>
+          ` : isAlreadyBlocked ? `
+            <div class="already-blocked-banner">
+              <div class="already-blocked-title">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+                ACTIVE CONTAINMENT · IP ALREADY BLOCKED
+              </div>
+              <div class="already-blocked-desc">
+                Source IP <code>${alert.source_ip}</code> is already blocked in active firewall perimeter rules ${activeBlockRule ? `(Rule: ${activeBlockRule.rule_id})` : ""}. Ingress traffic is automatically intercepted and dropped without requiring manual analyst action.
               </div>
             </div>
           ` : isActioned ? `
