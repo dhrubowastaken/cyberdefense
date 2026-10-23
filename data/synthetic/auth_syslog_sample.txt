@@ -1,0 +1,10 @@
+Oct 23 01:15:10 web-srv sshd[1422]: Failed password for invalid user admin from 192.168.1.105 port 50000 ssh2
+Oct 23 01:15:11 web-srv sshd[1422]: Failed password for invalid user admin from 192.168.1.105 port 50001 ssh2
+Oct 23 01:15:12 web-srv sshd[1422]: Failed password for invalid user admin from 192.168.1.105 port 50002 ssh2
+Oct 23 01:15:13 web-srv sshd[1422]: Failed password for invalid user admin from 192.168.1.105 port 50003 ssh2
+Oct 23 01:15:14 web-srv sshd[1422]: Failed password for invalid user admin from 192.168.1.105 port 50004 ssh2
+Oct 23 01:15:15 web-srv sshd[1422]: Failed password for invalid user admin from 192.168.1.105 port 50005 ssh2
+Oct 23 01:15:16 web-srv sshd[1422]: Failed password for invalid user admin from 192.168.1.105 port 50006 ssh2
+Oct 23 01:15:17 web-srv sshd[1422]: Failed password for invalid user admin from 192.168.1.105 port 50007 ssh2
+Oct 23 01:15:25 web-srv sshd[1422]: Accepted password for admin from 192.168.1.105 port 50020 ssh2
+Oct 23 01:15:30 web-srv sudo: admin : TTY=pts/0 ; COMMAND=/bin/bash

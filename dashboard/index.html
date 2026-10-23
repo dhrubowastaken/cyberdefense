@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberDefense // Autonomous SOAR-Lite SOC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="ambient-glow glow-top"></div>
+  <div class="ambient-glow glow-bottom"></div>
+
+  <!-- Header Section -->
+  <header class="app-header">
+    <div class="brand-area">
+      <div class="radar-ping">
+        <span class="ping-circle"></span>
+        <span class="ping-dot"></span>
+      </div>
+      <div>
+        <h1 class="logo-title">CYBERDEFENSE <span class="logo-accent">// SOAR-LITE</span></h1>
+        <p class="logo-subtitle">Agentic SOC Operations · Tier 1 Detection + Tier 2 LLM Investigation</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <div class="engine-badge" id="engineStatusBadge">
+        <span class="badge-dot"></span>
+        <span id="llmProviderLabel">LLM: Gemini 2.0 Flash</span>
+      </div>
+
+      <!-- User requested Launch Temporary Simulation button -->
+      <button class="btn btn-primary glow-btn" id="openSimModalBtn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        Launch Temporary Simulation
+      </button>
+
+      <button class="btn btn-secondary" id="resetSystemBtn" title="Reset all alerts, containment rules, and simulation memory">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          <path d="M3 3v5h5"></path>
+        </svg>
+        Reset State
+      </button>
+    </div>
+  </header>
+
+  <!-- Telemetry Metrics Bar -->
+  <section class="metrics-grid">
+    <div class="metric-card" id="defconCard">
+      <div class="metric-label">DEFCON STATUS</div>
+      <div class="metric-value defcon-val" id="defconValue">DEFCON 5</div>
+      <div class="metric-sub" id="defconSub">SYSTEM NORMAL</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-label">PENDING TRIAGE</div>
+      <div class="metric-value text-amber" id="pendingAlertsCount">0</div>
+      <div class="metric-sub">Awaiting Human Decision</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-label">CRITICAL ATTACKS</div>
+      <div class="metric-value text-crimson" id="criticalAlertsCount">0</div>
+      <div class="metric-sub" id="totalAlertsSub">0 Total Alerts Flagged</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-label">ACTIVE CONTAINMENT</div>
+      <div class="metric-value text-cyan" id="containmentCount">0</div>
+      <div class="metric-sub">Blocked IPs & Host Quarantines</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="metric-label">SOC EFFICIENCY GAIN</div>
+      <div class="metric-value text-emerald" id="efficiencyGain">94%</div>
+      <div class="metric-sub">2 min vs 30 min Manual Triage</div>
+    </div>
+  </section>
+
+  <!-- Main Multi-Column Content Area -->
+  <main class="dashboard-layout">
+    <!-- Left Column: Alerts Feed & Investigation Reports -->
+    <section class="panel alerts-panel">
+      <div class="panel-header">
+        <div class="panel-title-group">
+          <h2 class="panel-title">THREAT ALERTS & LLM INVESTIGATIONS</h2>
+          <span class="count-badge" id="alertCountBadge">0 alerts</span>
+        </div>
+        <div class="filter-tabs">
+          <button class="tab-btn active" data-filter="all">All</button>
+          <button class="tab-btn" data-filter="pending">Pending</button>
+          <button class="tab-btn" data-filter="critical">Critical</button>
+          <button class="tab-btn" data-filter="false_positive">🛡️ Auto-Triage (FP)</button>
+          <button class="tab-btn" data-filter="actioned">Actioned</button>
+        </div>
+      </div>
+
+      <div class="alerts-stream" id="alertsList">
+        <!-- Empty state placeholder -->
+        <div class="empty-state" id="emptyAlertsState">
+          <div class="empty-icon">🛡️</div>
+          <h3>Perimeter Secure · No Active Alerts</h3>
+          <p>Click <strong>"Launch Temporary Simulation"</strong> above to ingest a custom .log or .txt file and observe autonomous detection & LLM threat investigation.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column: Active Firewall & Live Log Stream -->
+    <section class="side-column">
+      <!-- Active Firewall Table -->
+      <div class="panel containment-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">ACTIVE CONTAINMENT PERIMETER</h2>
+          <span class="status-indicator live-pulse">LIVE</span>
+        </div>
+        <div class="table-container">
+          <table class="data-table" id="firewallTable">
+            <thead>
+              <tr>
+                <th>RULE ID</th>
+                <th>TYPE</th>
+                <th>TARGET</th>
+                <th>ACTION</th>
+              </tr>
+            </thead>
+            <tbody id="firewallBody">
+              <tr>
+                <td colspan="4" class="empty-table-msg">No active firewall blocks or host quarantines</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Live Log Stream Console -->
+      <div class="panel terminal-panel">
+        <div class="panel-header">
+          <div class="panel-title-group">
+            <h2 class="panel-title">TELEMETRY INGESTION STREAM</h2>
+            <span class="live-tag" id="streamFpsTag">0 ev/s</span>
+          </div>
+          <button class="terminal-clear-btn" id="clearTerminalBtn">Clear</button>
+        </div>
+        <div class="terminal-body" id="logTerminal">
+          <div class="log-line log-system">[SYS] Telemetry ingestion listener ready. Listening for .log / .txt event streams...</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal: Launch Temporary Simulation with Custom File Input -->
+  <div class="modal-backdrop" id="simModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 class="modal-title">LAUNCH TEMPORARY SIMULATION</h2>
+          <p class="modal-subtitle">Inject live attack telemetry or load custom log files (.log, .txt, .csv)</p>
+        </div>
+        <button class="modal-close-btn" id="closeSimModalBtn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- File Picker Option (User Requested Core Feature) -->
+        <div class="sim-section">
+          <label class="section-label">OPTION 1: SELECT CUSTOM LOG FILE (.LOG OR .TXT)</label>
+          <div class="file-dropzone" id="dropzone">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            <p class="dropzone-text">Drag and drop your log file here, or click to browse</p>
+            <p class="dropzone-hint">Supports Syslog, Auth.log, Apache, or Raw Network Logs</p>
+            
+            <!-- Native file input triggered by Select File button -->
+            <input type="file" id="logFileInput" accept=".log,.txt,.csv" style="display: none;">
+            <button type="button" class="btn btn-outline" id="browseFileBtn">
+              📁 Select File
+            </button>
+            <div class="selected-file-name" id="selectedFileName">No file selected</div>
+          </div>
+        </div>
+
+        <!-- Preset Attack Scenarios -->
+        <div class="sim-section">
+          <label class="section-label">OPTION 2: SELECT PRESET ATTACK CHAIN</label>
+          <div class="preset-grid">
+            <label class="preset-option active">
+              <input type="radio" name="scenarioRadio" value="data/synthetic/enterprise_mixed_traffic_with_false_positives.log" checked>
+              <div class="preset-content">
+                <div class="preset-title">🏢 Enterprise Stream (False Positives + Active Attacks)</div>
+                <div class="preset-desc">100 Events: Nessus scanner, DB backup sync, employee typo, sysadmin sudo + true breach & exfiltration</div>
+              </div>
+            </label>
+
+            <label class="preset-option">
+              <input type="radio" name="scenarioRadio" value="data/synthetic/attack_chain_full.log">
+              <div class="preset-content">
+                <div class="preset-title">⚔️ Full Coordinated Kill Chain</div>
+                <div class="preset-desc">Port Recon (T1046) → SSH Brute Force (T1110) → Priv Escalation (T1068) → Data Exfiltration (T1041)</div>
+              </div>
+            </label>
+
+            <label class="preset-option">
+              <input type="radio" name="scenarioRadio" value="data/synthetic/ssh_brute_force.log">
+              <div class="preset-content">
+                <div class="preset-title">🔑 SSH Brute Force & Password Breach</div>
+                <div class="preset-desc">15 rapid failed logins followed by successful login on user 'admin'</div>
+              </div>
+            </label>
+
+            <label class="preset-option">
+              <input type="radio" name="scenarioRadio" value="data/synthetic/port_scan_recon.log">
+              <div class="preset-content">
+                <div class="preset-title">🌐 Multi-Port Service Discovery</div>
+                <div class="preset-desc">Horizontal and vertical scanning across 17 ports with rejection tracking</div>
+              </div>
+            </label>
+
+            <label class="preset-option">
+              <input type="radio" name="scenarioRadio" value="data/synthetic/data_exfiltration.log">
+              <div class="preset-content">
+                <div class="preset-title">💾 Mass Data Exfiltration</div>
+                <div class="preset-desc">150MB high-speed egress transmission to external command & control IP</div>
+              </div>
+            </label>
+
+            <label class="preset-option">
+              <input type="radio" name="scenarioRadio" value="data/synthetic/auth_syslog_sample.txt">
+              <div class="preset-content">
+                <div class="preset-title">📄 Linux Syslog Auth.log (.txt)</div>
+                <div class="preset-desc">Raw Linux /var/log/auth.log format with failed passwords & sudo elevation</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Simulation Speed Multiplier -->
+        <div class="sim-section">
+          <label class="section-label">PLAYBACK SPEED</label>
+          <div class="speed-selector">
+            <button class="speed-btn" data-speed="1">1x (Realtime)</button>
+            <button class="speed-btn" data-speed="5">5x (Fast)</button>
+            <button class="speed-btn active" data-speed="10">10x (Optimal)</button>
+            <button class="speed-btn" data-speed="0">⚡ Instant</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelSimBtn">Cancel</button>
+        <button class="btn btn-primary glow-btn" id="startSimBtn">
+          ▶️ Start Simulation
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

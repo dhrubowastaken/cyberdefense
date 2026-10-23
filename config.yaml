@@ -1,0 +1,53 @@
+project:
+  name: CyberDefense
+  version: 0.1.0
+llm:
+  provider: gemini
+  gemini:
+    model: gemini-3.5-flash-lite
+    temperature: 0.2
+    max_output_tokens: 2048
+  ollama:
+    model: llama3
+    base_url: http://localhost:11434
+    temperature: 0.2
+detection:
+  brute_force:
+    enabled: true
+    window_seconds: 300
+    failed_login_threshold: 5
+    spray_user_threshold: 5
+    spray_attempt_threshold: 3
+  port_scan:
+    enabled: true
+    window_seconds: 60
+    unique_port_threshold: 10
+    rejection_rate_threshold: 0.8
+  privilege_escalation:
+    enabled: true
+    high_priv_users:
+    - root
+    - admin
+    - SYSTEM
+    - Administrator
+    service_accounts:
+    - www-data
+    - apache
+    - nginx
+    - httpd
+    - nobody
+  data_exfiltration:
+    enabled: true
+    window_seconds: 600
+    byte_threshold: 104857600
+    unknown_dest_multiplier: 0.5
+dashboard:
+  host: 127.0.0.1
+  port: 8000
+data:
+  log_dir: data
+  cicids_dir: data/cicids
+  synthetic_dir: data/synthetic
+  audit_log: data/audit.jsonl
+logging:
+  level: INFO
