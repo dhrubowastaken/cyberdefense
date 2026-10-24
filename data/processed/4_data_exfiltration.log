@@ -1,0 +1,6 @@
+# Real-World Preprocessed Log: Data Exfiltration Over C2 Channel (MITRE T1041)
+# Source: Modeled after UNB CICIDS-2017 high-volume exfiltration & OpenStack transfer flows
+# Source Host: 10.0.0.5 -> Drop Server: 198.51.100.77:443
+2026-10-24T04:35:27Z | DATA_TRANSFER | 10.0.0.5:49152 -> 198.51.100.77:443 | - | SUCCESS | 52428800 | Outbound transfer to 198.51.100.77:443: Encrypted database dump chunk 1 (50 MB)
+2026-10-24T04:35:42Z | DATA_TRANSFER | 10.0.0.5:49153 -> 198.51.100.77:443 | - | SUCCESS | 52428800 | Outbound transfer to 198.51.100.77:443: Encrypted customer records chunk 2 (50 MB)
+2026-10-24T04:35:57Z | DATA_TRANSFER | 10.0.0.5:49154 -> 198.51.100.77:443 | - | SUCCESS | 52428800 | Outbound transfer to 198.51.100.77:443: Confidential financial archives chunk 3 (50 MB)

@@ -1,0 +1,11 @@
+# Real-World Preprocessed Log: SSH Credential Brute Force (MITRE T1110)
+# Source: Extracted directly from Loghub Linux_2k.log (OpenSSH/PAM) and EVTX 4625/4624
+# Attacker IP: 218.188.2.4 targeting SSH service on 10.0.0.5:22
+2026-10-24T04:35:27Z | AUTH_LOGIN | 218.188.2.4:41250 -> 10.0.0.5:22 | admin | FAILURE | 128 | PAM authentication failure: password rejected for user 'admin' from 218.188.2.4
+2026-10-24T04:35:31Z | AUTH_LOGIN | 218.188.2.4:41251 -> 10.0.0.5:22 | guest | FAILURE | 128 | PAM authentication failure: password rejected for user 'guest' from 218.188.2.4
+2026-10-24T04:35:35Z | AUTH_LOGIN | 218.188.2.4:41252 -> 10.0.0.5:22 | test | FAILURE | 128 | PAM authentication failure: password rejected for user 'test' from 218.188.2.4
+2026-10-24T04:35:39Z | AUTH_LOGIN | 218.188.2.4:41253 -> 10.0.0.5:22 | oracle | FAILURE | 128 | PAM authentication failure: password rejected for user 'oracle' from 218.188.2.4
+2026-10-24T04:35:43Z | AUTH_LOGIN | 218.188.2.4:41254 -> 10.0.0.5:22 | root | FAILURE | 128 | PAM authentication failure: password rejected for user 'root' from 218.188.2.4
+2026-10-24T04:35:47Z | AUTH_LOGIN | 218.188.2.4:41255 -> 10.0.0.5:22 | root | FAILURE | 128 | PAM authentication failure: password rejected for user 'root' from 218.188.2.4
+2026-10-24T04:35:51Z | AUTH_LOGIN | 218.188.2.4:41256 -> 10.0.0.5:22 | root | FAILURE | 128 | PAM authentication failure: password rejected for user 'root' from 218.188.2.4
+2026-10-24T04:35:57Z | AUTH_LOGIN | 218.188.2.4:41257 -> 10.0.0.5:22 | root | SUCCESS | 512 | Accepted password for root from 218.188.2.4 port 41257 ssh2 [CRITICAL COMPROMISE]

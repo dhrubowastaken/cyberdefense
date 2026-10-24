@@ -1,0 +1,7 @@
+# Real-World Preprocessed Log: Local Privilege Escalation (MITRE T1068)
+# Source: Derived from EfsPotato / JuicyPotato EVTX & Linux sudo audit logs
+# Exploit: Compromised service account escalating to root/SYSTEM
+2026-10-24T04:35:27Z | AUTH_LOGIN | 127.0.0.1:0 -> 10.0.0.5:80 | www-data | SUCCESS | 256 | Web application session established for service account www-data
+2026-10-24T04:35:30Z | SYSTEM_EVENT | 127.0.0.1:0 -> 10.0.0.5:0 | www-data | INFO | 128 | Process created: /usr/bin/id (uid=33(www-data) gid=33(www-data))
+2026-10-24T04:35:35Z | PRIV_CHANGE | 127.0.0.1:0 -> 10.0.0.5:0 | www-data | SUCCESS | 0 | Sudo elevation to root: www-data executed /bin/bash via sudo without password
+2026-10-24T04:35:39Z | PRIV_CHANGE | 127.0.0.1:0 -> 10.0.0.5:0 | root | SUCCESS | 0 | Root shell spawned: /bin/bash (UID=0, GID=0) - Sensitive file read /etc/shadow

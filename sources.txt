@@ -1,0 +1,95 @@
+================================================================================
+CyberDefense Real-World Threat Telemetry & Log Data Sources
+================================================================================
+
+This document details the exact repositories, archives, and sources for the 
+real-world telemetry and logs incorporated into the CyberDefense platform, 
+along with architectural justifications for selecting these sources over others.
+
+--------------------------------------------------------------------------------
+1. LogPAI Loghub (Production OS & Server Logs)
+--------------------------------------------------------------------------------
+- Repository: https://github.com/logpai/loghub
+- Benchmark Paper: "Loghub: A Large Collection of System Log Datasets for AI-driven Log Analytics" (IEEE ISSRE 2023)
+- Zenodo Archive: https://zenodo.org/records/3227177
+- Files Acquired:
+    * Linux_2k.log (2,000 lines from OpenSSH / PAM / Linux /var/log/secure)
+    * Apache_2k.log (2,000 lines of Apache web server access & mod_jk worker logs)
+    * OpenStack_2k.log (Cloud API and hypervisor networking logs)
+    * HDFS_2k.log (Distributed filesystem data transfer logs)
+
+- Justification over other sources:
+    1. Authentic Production Telemetry: Unlike synthetic logs generated with fixed
+       templates, Loghub contains genuine production telemetry collected from 
+       live servers, internet-exposed clusters, and research supercomputers.
+    2. Real Adversary Footprints: Linux_2k.log captures actual automated botnet
+       dictionary attacks and brute force campaigns (e.g. from IPs 218.188.2.4 
+       and 220-135-151-1.hinet-ip.hinet.net) targeting the root account with 
+       real-world authentication failure patterns.
+    3. Noise & Edge Cases: Contains un-sanitized operational anomalies (service 
+       restarts, session closures, unknown user checks) essential for testing 
+       false positive resistance in Tier 1 detection and Tier 2 LLM analysis.
+
+--------------------------------------------------------------------------------
+2. EVTX-ATTACK-SAMPLES (Mapped Directly to MITRE ATT&CK)
+--------------------------------------------------------------------------------
+- Repository: https://github.com/sbousseaden/EVTX-ATTACK-SAMPLES
+- Curator: Sofiane Bousseaden (Cyber Threat Hunter & DFIR Researcher)
+- Files Acquired & Converted:
+    * Credential_Access_4624_4625.evtx (Windows Event ID 4625 Logon Failure & 4624 Success)
+    * Privilege_Escalation_EfsPotato_SYSTEM.evtx (Live EfsPotato local privilege escalation)
+    * Privilege_Escalation_JuicyPotato.evtx (Live JuicyPotato token impersonation)
+
+- Justification over other sources:
+    1. Exact MITRE ATT&CK Alignment: Samples are categorized by actual attack 
+       tactics (T1110 Credential Access, T1068 Privilege Escalation) rather 
+       than generic system event streams.
+    2. Weaponized Exploit Artifacts: Contains real post-exploitation telemetry 
+       capturing named pipe hijacking (\pipe\srvsvc), RPC relay, and elevation 
+       from unprivileged service accounts (NT AUTHORITY\NETWORK SERVICE) 
+       to NT AUTHORITY\SYSTEM.
+    3. Real-world SIEM Benchmark: Used as the reference ground-truth dataset 
+       by detection engineering teams to validate Sigma rules, Sysmon agents, 
+       and EDR engines.
+
+--------------------------------------------------------------------------------
+3. Canadian Institute for Cybersecurity (UNB CICIDS-2017 / CSE-CIC-IDS2018)
+--------------------------------------------------------------------------------
+- Portal: https://www.unb.ca/cic/datasets/ids-2017.html
+- Kaggle Dataset: https://www.kaggle.com/datasets/cicdataset/cicids2017
+- Specific Datasets:
+    * Friday-WorkingHours-Afternoon-PortScan (Network Service Discovery T1046)
+    * Tuesday-WorkingHours (SSH-Patator & FTP-Patator Credential Attacks T1110)
+    * Thursday-WorkingHours-Afternoon-Infilteration (Privilege Escalation T1068)
+
+- Justification over older datasets (KDD99 / DARPA):
+    1. Modern Attack Profiles: KDD99 and DARPA are over 25 years old and lack 
+       modern protocols, TLS/HTTPS behaviors, and multi-stage APT tradecraft.
+    2. Comprehensive Port Scanning Telemetry: Captures horizontal and vertical 
+       port scans across TCP and UDP with authentic SYN/RST connection responses.
+    3. High-Fidelity Flow Metadata: Includes complete bidirectional packet and 
+       byte counts required to accurately calibrate the Data Exfiltration detector.
+
+--------------------------------------------------------------------------------
+4. SecRepo (Curated Information Security Repository)
+--------------------------------------------------------------------------------
+- Portal: http://www.secrepo.com/
+- Curator: Mike Sconzo
+- Primary Resources:
+    * MACCDC 2012 Zeek/Bro Network Traffic (conn.log, http.log)
+    * Internet Honeypot SSH & Auth Dumps
+
+- Justification over raw PCAPs:
+    1. Pre-correlated Zeek metadata: High-speed connection summaries eliminating 
+       the CPU overhead of reassembling multi-gigabyte packet dumps.
+    2. Real Honeypot Traffic: Genuine internet background radiation and probing 
+       useful for tuning threshold sensitivity against scanner noise.
+
+================================================================================
+Summary of Dataset Mapping to CyberDefense Tier 1 Modules
+================================================================================
+1. Port Scan (MITRE T1046):           UNB CICIDS-2017 & Loghub FTP/SSH probe streams
+2. Brute Force (MITRE T1110):         Loghub Linux_2k.log & EVTX Event 4625/4624
+3. Privilege Escalation (MITRE T1068): EVTX EfsPotato/JuicyPotato & Linux Sudo
+4. Data Exfiltration (MITRE T1041):   UNB CICIDS & High-volume egress telemetry
+================================================================================

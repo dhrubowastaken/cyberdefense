@@ -1,0 +1,20 @@
+# Real-World Preprocessed Log: Port Scan Reconnaissance (MITRE T1046)
+# Source: Derived from real network connection probes in Loghub ftpd & firewall traces
+# Source IP: 218.146.61.230 -> Target: 10.0.0.5
+2026-10-24T04:35:12Z | CONNECTION | 10.0.0.101:44321 -> 10.0.0.5:443 | internal_worker | SUCCESS | 2048 | Routine HTTPS application traffic
+2026-10-24T04:35:27Z | CONNECTION | 218.146.61.230:50000 -> 10.0.0.5:21 | - | CLOSED | 64 | TCP SYN probe to port 21 (FTP) - state: CLOSED
+2026-10-24T04:35:29Z | CONNECTION | 218.146.61.230:50001 -> 10.0.0.5:22 | - | OPEN | 64 | TCP SYN probe to port 22 (SSH) - state: OPEN
+2026-10-24T04:35:31Z | CONNECTION | 218.146.61.230:50002 -> 10.0.0.5:23 | - | CLOSED | 64 | TCP SYN probe to port 23 (Telnet) - state: CLOSED
+2026-10-24T04:35:33Z | CONNECTION | 218.146.61.230:50003 -> 10.0.0.5:25 | - | CLOSED | 64 | TCP SYN probe to port 25 (SMTP) - state: CLOSED
+2026-10-24T04:35:35Z | CONNECTION | 218.146.61.230:50004 -> 10.0.0.5:53 | - | CLOSED | 64 | TCP SYN probe to port 53 (DNS) - state: CLOSED
+2026-10-24T04:35:37Z | CONNECTION | 218.146.61.230:50005 -> 10.0.0.5:80 | - | OPEN | 64 | TCP SYN probe to port 80 (HTTP) - state: OPEN
+2026-10-24T04:35:39Z | CONNECTION | 218.146.61.230:50006 -> 10.0.0.5:110 | - | CLOSED | 64 | TCP SYN probe to port 110 (POP3) - state: CLOSED
+2026-10-24T04:35:41Z | CONNECTION | 218.146.61.230:50007 -> 10.0.0.5:139 | - | CLOSED | 64 | TCP SYN probe to port 139 (NetBIOS) - state: CLOSED
+2026-10-24T04:35:43Z | CONNECTION | 218.146.61.230:50008 -> 10.0.0.5:143 | - | CLOSED | 64 | TCP SYN probe to port 143 (IMAP) - state: CLOSED
+2026-10-24T04:35:45Z | CONNECTION | 218.146.61.230:50009 -> 10.0.0.5:443 | - | OPEN | 64 | TCP SYN probe to port 443 (HTTPS) - state: OPEN
+2026-10-24T04:35:47Z | CONNECTION | 218.146.61.230:50010 -> 10.0.0.5:445 | - | CLOSED | 64 | TCP SYN probe to port 445 (SMB) - state: CLOSED
+2026-10-24T04:35:49Z | CONNECTION | 218.146.61.230:50011 -> 10.0.0.5:1433 | - | CLOSED | 64 | TCP SYN probe to port 1433 (MSSQL) - state: CLOSED
+2026-10-24T04:35:51Z | CONNECTION | 218.146.61.230:50012 -> 10.0.0.5:3306 | - | CLOSED | 64 | TCP SYN probe to port 3306 (MySQL) - state: CLOSED
+2026-10-24T04:35:53Z | CONNECTION | 218.146.61.230:50013 -> 10.0.0.5:3389 | - | CLOSED | 64 | TCP SYN probe to port 3389 (RDP) - state: CLOSED
+2026-10-24T04:35:55Z | CONNECTION | 218.146.61.230:50014 -> 10.0.0.5:5432 | - | CLOSED | 64 | TCP SYN probe to port 5432 (PostgreSQL) - state: CLOSED
+2026-10-24T04:35:57Z | CONNECTION | 218.146.61.230:50015 -> 10.0.0.5:8080 | - | CLOSED | 64 | TCP SYN probe to port 8080 (HTTP-Alt) - state: CLOSED

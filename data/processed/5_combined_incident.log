@@ -1,0 +1,44 @@
+# ==============================================================================
+# Real-World Preprocessed Log: End-to-End Multi-Stage Incident (APT Kill-Chain)
+# Phases: 1. Port Scan -> 2. SSH Brute Force -> 3. Sudo PrivEsc -> 4. Exfiltration
+# ==============================================================================
+
+# --- PHASE 1: RECONNAISSANCE & PORT SCAN (MITRE T1046) ---
+2026-10-24T04:35:12Z | CONNECTION | 10.0.0.101:44321 -> 10.0.0.5:443 | internal_worker | SUCCESS | 2048 | Routine HTTPS application traffic
+2026-10-24T04:35:27Z | CONNECTION | 218.146.61.230:50000 -> 10.0.0.5:21 | - | CLOSED | 64 | TCP SYN probe to port 21 (FTP) - state: CLOSED
+2026-10-24T04:35:29Z | CONNECTION | 218.146.61.230:50001 -> 10.0.0.5:22 | - | OPEN | 64 | TCP SYN probe to port 22 (SSH) - state: OPEN
+2026-10-24T04:35:31Z | CONNECTION | 218.146.61.230:50002 -> 10.0.0.5:23 | - | CLOSED | 64 | TCP SYN probe to port 23 (Telnet) - state: CLOSED
+2026-10-24T04:35:33Z | CONNECTION | 218.146.61.230:50003 -> 10.0.0.5:25 | - | CLOSED | 64 | TCP SYN probe to port 25 (SMTP) - state: CLOSED
+2026-10-24T04:35:35Z | CONNECTION | 218.146.61.230:50004 -> 10.0.0.5:53 | - | CLOSED | 64 | TCP SYN probe to port 53 (DNS) - state: CLOSED
+2026-10-24T04:35:37Z | CONNECTION | 218.146.61.230:50005 -> 10.0.0.5:80 | - | OPEN | 64 | TCP SYN probe to port 80 (HTTP) - state: OPEN
+2026-10-24T04:35:39Z | CONNECTION | 218.146.61.230:50006 -> 10.0.0.5:110 | - | CLOSED | 64 | TCP SYN probe to port 110 (POP3) - state: CLOSED
+2026-10-24T04:35:41Z | CONNECTION | 218.146.61.230:50007 -> 10.0.0.5:139 | - | CLOSED | 64 | TCP SYN probe to port 139 (NetBIOS) - state: CLOSED
+2026-10-24T04:35:43Z | CONNECTION | 218.146.61.230:50008 -> 10.0.0.5:143 | - | CLOSED | 64 | TCP SYN probe to port 143 (IMAP) - state: CLOSED
+2026-10-24T04:35:45Z | CONNECTION | 218.146.61.230:50009 -> 10.0.0.5:443 | - | OPEN | 64 | TCP SYN probe to port 443 (HTTPS) - state: OPEN
+2026-10-24T04:35:47Z | CONNECTION | 218.146.61.230:50010 -> 10.0.0.5:445 | - | CLOSED | 64 | TCP SYN probe to port 445 (SMB) - state: CLOSED
+2026-10-24T04:35:49Z | CONNECTION | 218.146.61.230:50011 -> 10.0.0.5:1433 | - | CLOSED | 64 | TCP SYN probe to port 1433 (MSSQL) - state: CLOSED
+2026-10-24T04:35:51Z | CONNECTION | 218.146.61.230:50012 -> 10.0.0.5:3306 | - | CLOSED | 64 | TCP SYN probe to port 3306 (MySQL) - state: CLOSED
+2026-10-24T04:35:53Z | CONNECTION | 218.146.61.230:50013 -> 10.0.0.5:3389 | - | CLOSED | 64 | TCP SYN probe to port 3389 (RDP) - state: CLOSED
+2026-10-24T04:35:55Z | CONNECTION | 218.146.61.230:50014 -> 10.0.0.5:5432 | - | CLOSED | 64 | TCP SYN probe to port 5432 (PostgreSQL) - state: CLOSED
+2026-10-24T04:35:57Z | CONNECTION | 218.146.61.230:50015 -> 10.0.0.5:8080 | - | CLOSED | 64 | TCP SYN probe to port 8080 (HTTP-Alt) - state: CLOSED
+
+# --- PHASE 2: CREDENTIAL GUESSING & BRUTE FORCE (MITRE T1110) ---
+2026-10-24T04:36:12Z | AUTH_LOGIN | 218.188.2.4:41250 -> 10.0.0.5:22 | admin | FAILURE | 128 | PAM authentication failure: password rejected for user 'admin' from 218.188.2.4
+2026-10-24T04:36:16Z | AUTH_LOGIN | 218.188.2.4:41251 -> 10.0.0.5:22 | guest | FAILURE | 128 | PAM authentication failure: password rejected for user 'guest' from 218.188.2.4
+2026-10-24T04:36:20Z | AUTH_LOGIN | 218.188.2.4:41252 -> 10.0.0.5:22 | test | FAILURE | 128 | PAM authentication failure: password rejected for user 'test' from 218.188.2.4
+2026-10-24T04:36:24Z | AUTH_LOGIN | 218.188.2.4:41253 -> 10.0.0.5:22 | oracle | FAILURE | 128 | PAM authentication failure: password rejected for user 'oracle' from 218.188.2.4
+2026-10-24T04:36:28Z | AUTH_LOGIN | 218.188.2.4:41254 -> 10.0.0.5:22 | root | FAILURE | 128 | PAM authentication failure: password rejected for user 'root' from 218.188.2.4
+2026-10-24T04:36:32Z | AUTH_LOGIN | 218.188.2.4:41255 -> 10.0.0.5:22 | root | FAILURE | 128 | PAM authentication failure: password rejected for user 'root' from 218.188.2.4
+2026-10-24T04:36:36Z | AUTH_LOGIN | 218.188.2.4:41256 -> 10.0.0.5:22 | root | FAILURE | 128 | PAM authentication failure: password rejected for user 'root' from 218.188.2.4
+2026-10-24T04:36:42Z | AUTH_LOGIN | 218.188.2.4:41257 -> 10.0.0.5:22 | root | SUCCESS | 512 | Accepted password for root from 218.188.2.4 port 41257 ssh2 [CRITICAL COMPROMISE]
+
+# --- PHASE 3: PRIVILEGE ESCALATION TO ROOT (MITRE T1068) ---
+2026-10-24T04:36:52Z | AUTH_LOGIN | 127.0.0.1:0 -> 10.0.0.5:80 | www-data | SUCCESS | 256 | Web application session established for service account www-data
+2026-10-24T04:36:55Z | SYSTEM_EVENT | 127.0.0.1:0 -> 10.0.0.5:0 | www-data | INFO | 128 | Process created: /usr/bin/id (uid=33(www-data) gid=33(www-data))
+2026-10-24T04:37:00Z | PRIV_CHANGE | 127.0.0.1:0 -> 10.0.0.5:0 | www-data | SUCCESS | 0 | Sudo elevation to root: www-data executed /bin/bash via sudo without password
+2026-10-24T04:37:04Z | PRIV_CHANGE | 127.0.0.1:0 -> 10.0.0.5:0 | root | SUCCESS | 0 | Root shell spawned: /bin/bash (UID=0, GID=0) - Sensitive file read /etc/shadow
+
+# --- PHASE 4: HIGH-VOLUME DATA EXFILTRATION (MITRE T1041) ---
+2026-10-24T04:37:22Z | DATA_TRANSFER | 10.0.0.5:49152 -> 198.51.100.77:443 | - | SUCCESS | 52428800 | Outbound transfer to 198.51.100.77:443: Encrypted database dump chunk 1 (50 MB)
+2026-10-24T04:37:37Z | DATA_TRANSFER | 10.0.0.5:49153 -> 198.51.100.77:443 | - | SUCCESS | 52428800 | Outbound transfer to 198.51.100.77:443: Encrypted customer records chunk 2 (50 MB)
+2026-10-24T04:37:52Z | DATA_TRANSFER | 10.0.0.5:49154 -> 198.51.100.77:443 | - | SUCCESS | 52428800 | Outbound transfer to 198.51.100.77:443: Confidential financial archives chunk 3 (50 MB)
